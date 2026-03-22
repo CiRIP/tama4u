@@ -1,13 +1,9 @@
 import struct
 from importlib.resources import read_binary
-from typing import TYPE_CHECKING
 
 import ndef
 
 from . import templates
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 MIME_TYPE = "application/jp.co.bandai.tamagotchiapp"
 TIMEOUT_SECONDS = 35
@@ -16,9 +12,10 @@ MAGIC_HEADER = b"TAMAGO"
 
 
 def create_handshake_message() -> ndef.Record:
-    payload = read_binary(templates, "test.ndef")
+    payload = read_binary(templates, "send_start.bin")
+    padding = len(payload) % 4
 
-    return ndef.Record(MIME_TYPE, "", data=bytes(payload))
+    return ndef.Record(MIME_TYPE, "", data=payload + b"\x00" * padding)
 
 
 def create_download_message(extracted_data: bytes, mode: int = 0) -> ndef.Record:
