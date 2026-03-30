@@ -9,7 +9,7 @@ from nfc import ContactlessFrontend
 from nfc.snep import SnepClient, SnepServer, Success
 from rich.logging import RichHandler
 
-from src.tama4u.protocol import create_download_message, create_handshake_message, parse_response
+from tama4u.protocol import create_download_message, create_handshake_message, parse_response
 
 if TYPE_CHECKING:
     from collections.abc import Callable
