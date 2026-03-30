@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tama4u = "tama4u.__main__.app"
+tama4u = "tama4u.__main__:app"
 
 [tool.ruff]
 line-length = 120
