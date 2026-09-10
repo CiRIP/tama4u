@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tamagotchi 4U Item Downloader | Based on Mr.Blinky's translation work</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: monospace;
+            padding: 12px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        h3 {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        p {
+            font-size: 14px;
+        }
+
+        a {
+            color: #7dff7d;
+        }
+
+        button {
+            background: #3a3a3a;
+            border: 1px solid #555;
+            color: #ccc;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #4a4a4a;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        #top-bar {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        #top-bar p {
+            margin: 0;
+        }
+
+        #status-pill {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        #status-pill.connected {
+            color: #7dff7d;
+            border-color: #2d6a2d;
+        }
+
+        #layout {
+            display: flex;
+            justify-content: center;
+            gap: 64px;
+            width: 100%;
+        }
+
+        #or-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        #browser {
+            width: 390px;
+            flex-shrink: 0;
+            border: 1px solid #444;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            background: #2a2a2a;
+            border-bottom: 1px solid #444;
+        }
+
+        #nav-bar button {
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        #url-display {
+            flex: 1;
+            font-size: 11px;
+            color: #aaa;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            padding: 3px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #loading-indicator {
+            font-size: 11px;
+            color: #888;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        #browser-frame {
+            width: 100%;
+            height: 720px;
+            border: none;
+            background: #fff;
+            display: block;
+        }
+
+        #dropzone {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 390px;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 48px 16px;
+            text-align: center;
+            cursor: pointer;
+            color: #999;
+            transition: border-color .15s, color .15s, background .15s;
+        }
+
+        #dropzone:hover {
+            border-color: #666;
+            color: #ccc;
+        }
+
+        #dropzone.drag-over {
+            border-color: #7dff7d;
+            color: #7dff7d;
+            background: #16241a;
+        }
+
+        #dropzone .main-hint {
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        #dropzone .sub-hint {
+            font-size: 12px;
+            color: #666;
+        }
+
+        details#debug-log {
+            font-size: 12px;
+            color: #888;
+        }
+
+        details#debug-log summary {
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        details#debug-log pre {
+            background: #111;
+            border: 1px solid #333;
+            padding: 8px;
+            font-size: 11px;
+            line-height: 1.5;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #8a8a8a;
+            white-space: pre-wrap;
+            margin-top: 6px;
+        }
+
+        /* ── Wizard ── */
+
+        #wizard-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #wizard-overlay.hidden {
+            display: none;
+        }
+
+        #wizard-card {
+            width: 420px;
+            max-width: 90vw;
+            background: #232323;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        #wizard-steps {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        #wizard-steps .step {
+            flex: 1;
+            text-align: center;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #3a3a3a;
+        }
+
+        #wizard-steps .step.active {
+            color: #7dff7d;
+            border-color: #7dff7d;
+        }
+
+        #wizard-steps .step.done {
+            color: #aaa;
+            border-color: #555;
+        }
+
+        #wizard-body h3 {
+            margin-bottom: 12px;
+        }
+
+        #wizard-body p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            color: #ccc;
+        }
+
+        #wizard-connect-status,
+        #wizard-status {
+            font-size: 13px;
+            color: #aaa;
+            min-height: 18px;
+            margin-top: 6px;
+        }
+
+        #wizard-connect-status.error,
+        #wizard-status.error {
+            color: #ff8080;
+        }
+
+        .progress-bar {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            height: 14px;
+            overflow: hidden;
+            margin: 14px 0 4px;
+        }
+
+        .progress-fill {
+            background: #3a8a3a;
+            height: 100%;
+            width: 0%;
+            transition: width .25s;
+        }
+
+        #wizard-details {
+            margin-top: 12px;
+            padding: 8px 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #9fdf9f;
+            display: none;
+        }
+
+        #wizard-details.visible {
+            display: block;
+        }
+
+        #wizard-details div+div {
+            margin-top: 2px;
+        }
+
+        #wizard-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        #wizard-footer button {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+
+        #wizard-footer button.primary {
+            background: #2d6a2d;
+            border-color: #3a8a3a;
+            color: #fff;
+        }
+
+        #wizard-footer button.primary:hover:not(:disabled) {
+            background: #357a35;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top-bar">
+        <p>Based on Mr.Blinky's translation work. <a href="http://mrblinky.net/tama/4u/app/"
+                target="_blank">http://mrblinky.net/tama/4u/app/</a> | <a href="https://ko-fi.com/D1D02EEDN"
+                target="_blank">Mr.Blinky's Ko-Fi</a></p>
+        <div id="status-pill">reader not connected</div>
+    </div>
+
+    <div id="layout">
+        <div id="browser">
+            <div id="nav-bar">
+                <button id="btn-back" disabled>&#8592;</button>
+                <button id="btn-fwd" disabled>&#8594;</button>
+                <button id="btn-reload">&#8635;</button>
+                <div id="url-display">-</div>
+                <div id="loading-indicator"></div>
+            </div>
+            <iframe id="browser-frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+        </div>
+
+        <div id="or-divider">OR</div>
+
+        <div id="dropzone">
+            <div class="main-hint">Or, drop a file...</div>
+            <div class="sub-hint">...or click to upload</div>
+            <input type="file" id="manual-file" hidden>
+        </div>
+    </div>
+
+    <details id="debug-log">
+        <summary>Debug log</summary>
+        <pre id="log"></pre>
+    </details>
+
+    <div id="wizard-overlay" class="hidden">
+        <div id="wizard-card">
+            <div id="wizard-steps">
+                <div class="step" data-step="0">1. Connect</div>
+                <div class="step" data-step="1">2. Tap</div>
+                <div class="step" data-step="2">3. Transfer</div>
+            </div>
+            <div id="wizard-body"></div>
+            <div id="wizard-footer">
+                <button id="wizard-cancel">Cancel</button>
+                <button id="wizard-next" class="primary">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./pn532.js"></script>
+    <script>
+        // ── Tamagotchi protocol helpers ─────────────────────────────────────────
+
+        function makeHandshakePayload() {
+            const preamble = fromBase64("VEFNQUdPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgEAAAgAAAAAAHxoSJd1pk6ZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAYwF")
+            const pad = (4 - (preamble.length % 4)) % 4
+            const out = new Uint8Array(preamble.length + pad)
+            out.set(preamble)
+            return out
+        }
+
+        function makeDownloadPayload(itemData, mode = 0) {
+            const preamble = fromBase64("VEFNQUdPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAvgYAAAgAAAAAAHxoSJd1pk6ZAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAQ==")
+            const header = new Uint8Array(8)
+            const hv = new DataView(header.buffer)
+            header[0] = 3; header[1] = 0; header[2] = 0; header[3] = 0
+            header[4] = 1; header[5] = 0
+            hv.setUint16(6, itemData.length, true)
+            const rawLen = preamble.length + header.length + itemData.length + 2
+            const pad = ((itemData.length + 256) + 2) % 4
+            const payload = new Uint8Array(rawLen + pad)
+            payload.set(preamble, 0)
+            payload.set(header, preamble.length)
+            payload.set(itemData, preamble.length + header.length)
+            const totalSize = rawLen
+            const dv = new DataView(payload.buffer)
+            dv.setUint16(72, totalSize, true)
+            payload[132] = mode !== 0 ? 0x03 : 0x01
+            let checksum = 0
+            for (let i = 0; i < totalSize - 2; i++) checksum = (checksum + payload[i]) & 0xFFFF
+            dv.setUint16(totalSize - 2, checksum, true)
+            return payload
+        }
+
+        function parseResponse(ndefPayload) {
+            const payload = ndefPayload instanceof Uint8Array ? ndefPayload : new Uint8Array(ndefPayload)
+            if (payload.length < 140) return null
+            const deviceIdBytes = payload.slice(96, 112)
+            const parts = []
+            for (let i = 0; i < 16; i += 2)
+                parts.push((deviceIdBytes[i].toString(16).padStart(2, '0') + deviceIdBytes[i + 1].toString(16).padStart(2, '0')).toUpperCase())
+            const deviceId = parts.join('-')
+            const b0 = payload[138].toString().padStart(2, '0')
+            const b1 = payload[139].toString().padStart(2, '0')
+            return { deviceId, birthDate: b0 + b1 }
+        }
+
+        const pn532 = new Pn532()
+        new WebserialAdapter(pn532)
+        const tama = TamagotchiP2p(pn532)
+
+        const logEl = document.getElementById('log')
+        const print = msg => {
+            logEl.textContent += msg + '\n'
+            logEl.scrollTop = logEl.scrollHeight
+        }
+
+        const statusPill = document.getElementById('status-pill')
+        function refreshStatusPill() {
+            const open = !!pn532.adapter?.open
+            statusPill.textContent = open ? 'reader connected' : 'reader not connected'
+            statusPill.classList.toggle('connected', open)
+        }
+        refreshStatusPill()
+
+        // Single handshake-then-item-then-confirm exchange. The Tamagotchi is
+        // tapped once before this runs and stays on the reader throughout -
+        // onProgress just reports which of the 6 stages we're in.
+        const TRANSFER_STAGES = [
+            'Checking reader...',
+            'Starting handshake...',
+            'Waiting for the Tamagotchi...',
+            'Sending item...',
+            'Waiting for confirmation...',
+            'Done!',
+        ]
+
+        async function sendItemToTamagotchi(itemData, onProgress) {
+            onProgress(0)
+            const version = await pn532.getFirmwareVersion()
+            print(`firmware: ${version.firmware} (${version.ic})`)
+
+            onProgress(1)
+            await tama.send(makeHandshakePayload())
+
+            onProgress(2)
+            const handshakeResponse = await tama.receive()
+            const parsed = parseResponse(handshakeResponse)
+            if (parsed) print(`device ID: ${parsed.deviceId}, birth date: ${parsed.birthDate}`)
+
+            onProgress(3, parsed)
+            await tama.send(makeDownloadPayload(itemData))
+
+            onProgress(4, parsed)
+            const confirmation = await tama.receive()
+            print('confirmation: ' + Array.from(confirmation).map(b => b.toString(16).padStart(2, '0')).join(' '))
+
+            onProgress(5, parsed)
+            return { confirmation, parsed }
+        }
+
+        // ── Wizard ───────────────────────────────────────────────────────────
+
+        const wizard = {
+            overlay: document.getElementById('wizard-overlay'),
+            steps: [...document.querySelectorAll('#wizard-steps .step')],
+            body: document.getElementById('wizard-body'),
+            cancelBtn: document.getElementById('wizard-cancel'),
+            nextBtn: document.getElementById('wizard-next'),
+            page: 0,
+            itemData: null,
+            onDone: null,
+
+            open(itemData, { onDone } = {}) {
+                this.itemData = itemData
+                this.onDone = onDone || null
+                this.goTo(pn532.adapter?.open ? 1 : 0)
+                this.overlay.classList.remove('hidden')
+            },
+
+            close(result) {
+                this.overlay.classList.add('hidden')
+                if (this.onDone) this.onDone(result)
+            },
+
+            goTo(page) {
+                this.page = page
+                this.steps.forEach((el, i) => {
+                    el.classList.toggle('active', i === page)
+                    el.classList.toggle('done', i < page)
+                })
+                if (page === 0) this.renderConnect()
+                else if (page === 1) this.renderPosition()
+                else this.renderTransfer()
+            },
+
+            renderConnect() {
+                this.body.innerHTML = `
+                    <h3>Connect your PN532 reader</h3>
+                    <p>Plug in the PN532 USB adapter, then click below and pick it from the browser's device list.</p>
+                    <div id="wizard-connect-status"></div>
+                `
+                this.cancelBtn.disabled = false
+                this.cancelBtn.textContent = 'Cancel'
+                this.cancelBtn.onclick = () => this.close({ ok: false, cancelled: true })
+                this.nextBtn.textContent = 'Choose serial device'
+                this.nextBtn.disabled = false
+                this.nextBtn.onclick = async () => {
+                    const status = document.getElementById('wizard-connect-status')
+                    this.nextBtn.disabled = true
+                    status.classList.remove('error')
+                    status.textContent = 'waiting for device selection...'
+                    try {
+                        await pn532.adapter.connect()
+                        refreshStatusPill()
+                        this.goTo(1)
+                    } catch (err) {
+                        status.classList.add('error')
+                        status.textContent = err.message
+                        this.nextBtn.disabled = false
+                        console.error(err)
+                    }
+                }
+            },
+
+            renderPosition() {
+                this.body.innerHTML = `
+                    <h3>Start Receiving</h3>
+                    <p>On the Tamagotchi, go to the "Transfer" menu and select "4U APP".</p>
+                    <h3>Position the Tamagotchi</h3>
+                    <p>Place the Tamagotchi on the reader and leave it resting there. It stays on the reader for the whole transfer.</p>
+                `
+                this.cancelBtn.disabled = false
+                this.cancelBtn.textContent = 'Cancel'
+                this.cancelBtn.onclick = () => this.close({ ok: false, cancelled: true })
+                this.nextBtn.textContent = 'Start transfer'
+                this.nextBtn.disabled = false
+                this.nextBtn.onclick = () => this.runTransfer()
+            },
+
+            renderTransfer() {
+                this.body.innerHTML = `
+                    <h3>Transferring</h3>
+                    <div class="progress-bar"><div class="progress-fill" id="wizard-progress-fill"></div></div>
+                    <div id="wizard-status"></div>
+                    <div id="wizard-details"></div>
+                `
+                this.cancelBtn.disabled = true
+                this.nextBtn.disabled = true
+                this.nextBtn.textContent = 'Continue'
+            },
+
+            updateProgress(stageIndex, parsed) {
+                const fill = document.getElementById('wizard-progress-fill')
+                const status = document.getElementById('wizard-status')
+                fill.style.width = `${(stageIndex / (TRANSFER_STAGES.length - 1)) * 100}%`
+                status.classList.remove('error')
+                status.textContent = TRANSFER_STAGES[stageIndex]
+                if (parsed) {
+                    const details = document.getElementById('wizard-details')
+                    details.classList.add('visible')
+                    details.innerHTML = `<div>Device ID: ${parsed.deviceId}</div><div>Birth date: ${parsed.birthDate}</div>`
+                }
+            },
+
+            async runTransfer() {
+                this.goTo(2)
+                try {
+                    const { parsed } = await sendItemToTamagotchi(this.itemData, (i, p) => this.updateProgress(i, p))
+                    this.cancelBtn.disabled = false
+                    this.cancelBtn.textContent = 'Close'
+                    this.cancelBtn.onclick = () => this.close({ ok: true, parsed })
+                } catch (err) {
+                    const status = document.getElementById('wizard-status')
+                    status.classList.add('error')
+                    status.textContent = 'error: ' + err.message
+                    print('error: ' + err.message)
+                    console.error(err)
+                    this.cancelBtn.disabled = false
+                    this.cancelBtn.textContent = 'Close'
+                    this.cancelBtn.onclick = () => this.close({ ok: false, error: err })
+                }
+            },
+        }
+
+        // ── Item download (from the virtual phone) ──────────────────────────────
+
+        async function startDownload(itemCode, { onDone } = {}) {
+            print(`\nstarting download for: ${itemCode}`)
+            try {
+                const formData = new URLSearchParams()
+                formData.append('cd', itemCode)
+                formData.append('unixtime', Date.now().toString())
+
+                const response = await fetch('/4u-app/dlitem.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Cookie': 'ASESS=00000000000000000000000000000000',
+                        'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 10; SM-A750FN Build/QP1A.190711.020)',
+                    },
+                    body: formData.toString(),
+                })
+
+                if (!response.ok) throw new Error(`fetch failed: ${response.status}`)
+                const itemJson = await response.json()
+                const itemData = fromBase64(itemJson.bin)
+                print(`item data: ${itemData.length} bytes`)
+                wizard.open(itemData, { onDone })
+            } catch (err) {
+                print('error: ' + err.message)
+                console.error(err)
+                if (onDone) onDone({ ok: false, error: err })
+            }
+        }
+
+        // ── Manual file upload ────────────────────────────────────────────────
+
+        const TAMAGO_MAGIC = new TextEncoder().encode('TAMAGO')
+
+        function findMagic(bytes, magic) {
+            search: for (let i = 0; i <= bytes.length - magic.length; i++) {
+                for (let j = 0; j < magic.length; j++) if (bytes[i + j] !== magic[j]) continue search
+                return i
+            }
+            return -1
+        }
+
+        const dropzone = document.getElementById('dropzone')
+        const manualFileEl = document.getElementById('manual-file')
+
+        async function handleManualFile(file) {
+            if (!file) return
+
+            try {
+                const bytes = new Uint8Array(await file.arrayBuffer())
+                const offset = findMagic(bytes, TAMAGO_MAGIC)
+                if (offset === -1) {
+                    const preview = Array.from(bytes.subarray(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+                    print(`\nmanual file "${file.name}": no TAMAGO signature found (starts with: ${preview})`)
+                    return
+                }
+
+                const manualPayload = bytes.subarray(offset)
+                print(`\nmanual file "${file.name}": found TAMAGO payload at offset ${offset}, ${manualPayload.length} bytes`)
+                wizard.open(manualPayload, {
+                    onDone: result => {
+                        if (result?.ok) print(`"${file.name}": sent successfully`)
+                    },
+                })
+            } catch (err) {
+                console.error(err)
+            }
+        }
+
+        dropzone.addEventListener('click', () => manualFileEl.click())
+        manualFileEl.addEventListener('change', () => handleManualFile(manualFileEl.files[0]))
+
+        for (const evt of ['dragenter', 'dragover']) {
+            dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag-over') })
+        }
+        for (const evt of ['dragleave', 'dragend', 'drop']) {
+            dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag-over') })
+        }
+        dropzone.addEventListener('drop', e => handleManualFile(e.dataTransfer.files[0]))
+
+        // ── Proxied browser ───────────────────────────────────────────────────
+
+        const START_PATH = '/4u-app/free/3-0.php'
+
+        const frame = document.getElementById('browser-frame')
+        const urlDisplay = document.getElementById('url-display')
+        const loadingEl = document.getElementById('loading-indicator')
+        const btnBack = document.getElementById('btn-back')
+        const btnFwd = document.getElementById('btn-fwd')
+        const btnReload = document.getElementById('btn-reload')
+
+        const navHistory = []
+        let historyPos = -1
+        let currentPath = null
+        let loading = false
+
+        // Resolve href against a base path, returning a same-origin path or null
+        function resolvePath(basePath, href) {
+            if (!href || href.startsWith('javascript:') || href.startsWith('mailto:')) return null
+            try {
+                const base = new URL(basePath, window.location.origin)
+                const resolved = new URL(href, base)
+                if (resolved.origin !== window.location.origin) return null
+                return resolved.pathname + resolved.search + resolved.hash
+            } catch { return null }
+        }
+
+        function rewriteHtml(html, basePath) {
+            const parser = new DOMParser()
+            const doc = parser.parseFromString(html, 'text/html')
+
+            doc.querySelector('base')?.remove()
+
+            // Static assets: resolve to same-origin paths, server proxy handles the rest
+            for (const [tag, attr] of [['img', 'src'], ['script', 'src'], ['link', 'href'], ['source', 'src']]) {
+                for (const el of doc.querySelectorAll(`${tag}[${attr}]`)) {
+                    const resolved = resolvePath(basePath, el.getAttribute(attr))
+                    if (resolved) el.setAttribute(attr, resolved)
+                }
+            }
+
+            // Anchors: intercept same-origin via data-nav, open external in new tab
+            for (const el of doc.querySelectorAll('a[href]')) {
+                const href = el.getAttribute('href')
+                const resolved = resolvePath(basePath, href)
+                if (resolved) {
+                    el.setAttribute('data-nav', resolved)
+                    el.removeAttribute('href')
+                    el.style.cursor = 'pointer'
+                } else {
+                    try {
+                        el.setAttribute('href', new URL(href, 'http://mrblinky.net').href)
+                    } catch { }
+                    el.setAttribute('target', '_blank')
+                }
+            }
+
+            // Forms: stash resolved action, disable native submission
+            for (const el of doc.querySelectorAll('form')) {
+                const action = el.getAttribute('action')
+                el.setAttribute('data-action', resolvePath(basePath, action || basePath) || basePath)
+                el.setAttribute('action', '#')
+            }
+
+            // Bridge script injected into every page
+            const bridge = doc.createElement('script')
+            bridge.textContent = `
+                (function() {
+                    document.addEventListener('click', function(e) {
+                        var el = e.target.closest('[data-nav]')
+                        if (!el) return
+                        e.preventDefault()
+                        window.parent.postMessage({ type: 'nav', path: el.getAttribute('data-nav') }, '*')
+                    })
+                    document.addEventListener('submit', function(e) {
+                        e.preventDefault()
+                        var form = e.target
+                        var action = form.getAttribute('data-action')
+                        var method = (form.method || 'get').toLowerCase()
+                        var data = new URLSearchParams(new FormData(form)).toString()
+                        window.parent.postMessage({ type: 'submit', action: action, method: method, body: data }, '*')
+                    })
+                })()
+            `
+            doc.body.appendChild(bridge)
+
+            return '<!DOCTYPE html>' + doc.documentElement.outerHTML
+        }
+
+        async function navigate(path, pushHistory = true) {
+            if (checkForItem(path)) return  // signal URL - don't fetch, just act
+
+            if (loading) return
+            loading = true
+            loadingEl.textContent = 'loading...'
+            urlDisplay.textContent = path
+
+            try {
+                const res = await fetch(path)
+                if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                const html = await res.text()
+                frame.srcdoc = rewriteHtml(html, path)
+                currentPath = path
+
+                if (pushHistory) {
+                    navHistory.splice(historyPos + 1)
+                    navHistory.push(path)
+                    historyPos = navHistory.length - 1
+                }
+
+                btnBack.disabled = historyPos <= 0
+                btnFwd.disabled = historyPos >= navHistory.length - 1
+
+            } catch (err) {
+                frame.srcdoc = `<html><body style="font-family:monospace;padding:20px;color:#c00">
+                    Error loading ${path}<br><br>${err.message}</body></html>`
+                print('nav error: ' + err.message)
+            } finally {
+                loading = false
+                loadingEl.textContent = ''
+            }
+        }
+
+        async function submitForm(action, method, body) {
+            if (loading) return
+            loading = true
+            loadingEl.textContent = 'loading...'
+
+            try {
+                let res, finalPath
+
+                if (method === 'get') {
+                    finalPath = action + (body ? '?' + body : '')
+                    res = await fetch(finalPath)
+                } else {
+                    finalPath = action
+                    res = await fetch(action, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body,
+                    })
+                }
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                const html = await res.text()
+                frame.srcdoc = rewriteHtml(html, finalPath)
+                currentPath = finalPath
+                urlDisplay.textContent = finalPath
+
+                navHistory.splice(historyPos + 1)
+                navHistory.push(finalPath)
+                historyPos = navHistory.length - 1
+                btnBack.disabled = historyPos <= 0
+                btnFwd.disabled = true
+                checkForItem(finalPath)
+
+            } catch (err) {
+                print('form error: ' + err.message)
+            } finally {
+                loading = false
+                loadingEl.textContent = ''
+            }
+        }
+
+        function checkForItem(path) {
+            if (!path.includes('item_download.html')) return false
+
+            const url = URL.parse(path, "http://virtual/")
+            const itemCode = url.searchParams.get('dl_id')
+            const successUrl = url.searchParams.get('success_url')
+            const cancelUrl = url.searchParams.get('cancel_url')
+            startDownload(itemCode, {
+                onDone: result => navigate(result?.ok ? successUrl : cancelUrl),
+            })
+            return true
+        }
+
+        window.addEventListener('message', e => {
+            const msg = e.data
+            if (!msg || typeof msg !== 'object') return
+            if (msg.type === 'nav' && msg.path) navigate(msg.path)
+            if (msg.type === 'submit') submitForm(msg.action, msg.method, msg.body)
+        })
+
+        btnBack.addEventListener('click', () => {
+            if (historyPos <= 0) return
+            historyPos--
+            navigate(navHistory[historyPos], false)
+            btnBack.disabled = historyPos <= 0
+            btnFwd.disabled = historyPos >= navHistory.length - 1
+        })
+
+        btnFwd.addEventListener('click', () => {
+            if (historyPos >= navHistory.length - 1) return
+            historyPos++
+            navigate(navHistory[historyPos], false)
+            btnBack.disabled = historyPos <= 0
+            btnFwd.disabled = historyPos >= navHistory.length - 1
+        })
+
+        btnReload.addEventListener('click', () => {
+            if (currentPath) navigate(currentPath, false)
+        })
+
+        navigate(START_PATH)
+    </script>
+</body>
+
+</html>
